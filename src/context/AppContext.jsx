@@ -13,7 +13,6 @@ export const AppProvider = ({ children }) => {
   });
   const [students, setStudents] = useState([]);
   const [subjects, setSubjects] = useState([]);
-  const [schedules, setSchedules] = useState([]);
   const [attendance, setAttendance] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -25,9 +24,6 @@ export const AppProvider = ({ children }) => {
   const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
   const [prefilledAttendanceData, setPrefilledAttendanceData] = useState(null);
 
-  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
-  const [prefilledScheduleData, setPrefilledScheduleData] = useState(null);
-
   const [invoicePreviewData, setInvoicePreviewData] = useState(null);
 
   // ─── Initial Data Load from Backend ─────────────────────────────────────
@@ -35,17 +31,15 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     async function loadAll() {
       try {
-        const [ti, subj, stud, sch, att] = await Promise.all([
+        const [ti, subj, stud, att] = await Promise.all([
           api.getTeacherInfo(),
           api.getSubjects(),
           api.getStudents(),
-          api.getSchedules(),
           api.getAttendance(),
         ]);
         setTeacherInfo(ti);
         setSubjects(subj);
         setStudents(stud);
-        setSchedules(sch);
         setAttendance(att);
       } catch (err) {
         console.error('Failed to load initial data:', err);
@@ -63,48 +57,6 @@ export const AppProvider = ({ children }) => {
     }, 3500);
   };
 
-  // ─── Schedule Conflict Detection (client-side for UX) ───────────────────
-
-  const timeToMinutes = (timeStr) => {
-    if (!timeStr) return 0;
-    const [h, m] = timeStr.split(':').map(Number);
-    return h * 60 + m;
-  };
-
-  const checkScheduleConflict = (newSchedule, ignoreId = null) => {
-    if (!newSchedule.date || !newSchedule.startTime || !newSchedule.endTime) {
-      return { isConflict: false };
-    }
-
-    const newStartMinutes = timeToMinutes(newSchedule.startTime);
-    const newEndMinutes = timeToMinutes(newSchedule.endTime);
-
-    if (newEndMinutes <= newStartMinutes) {
-      return { isConflict: true, reason: 'Jam selesai harus lebih akhir dari jam mulai.' };
-    }
-
-    for (const item of schedules) {
-      if (ignoreId && item.id === ignoreId) continue;
-      if (item.status === 'cancelled') continue;
-      if (item.date !== newSchedule.date) continue;
-
-      const existStart = timeToMinutes(item.startTime);
-      const existEnd = timeToMinutes(item.endTime);
-
-      if (newStartMinutes < existEnd && newEndMinutes > existStart) {
-        const student = students.find((s) => s.id === item.studentId);
-        return {
-          isConflict: true,
-          conflictingSchedule: item,
-          studentName: student ? student.name : 'Siswa Lain',
-          timeSlot: `${item.startTime} - ${item.endTime}`,
-          reason: `Bentrok dengan jadwal ${student ? student.name : 'Siswa Lain'} (${item.startTime} - ${item.endTime})`,
-        };
-      }
-    }
-
-    return { isConflict: false };
-  };
 
   // ─── Fee Calculator ─────────────────────────────────────────────────────
 
@@ -117,11 +69,17 @@ export const AppProvider = ({ children }) => {
     const standardMin = Number(student.sessionDurationMin) || 90;
 
     if (student.rateType === 'per_hour') {
-      return Math.round((baseRate * duration) / 60);
-    } else if (student.rateType === 'custom' || student.rateType === 'per_session') {
-      return Math.round((baseRate * duration) / standardMin);
+      return Math.round((baseRate / 60) * duration);
+    } else if (student.rateType === 'per_session') {
+      // Prorate if actual duration differs from standard duration
+      if (standardMin > 0 && duration !== standardMin) {
+        return Math.round((baseRate / standardMin) * duration);
+      }
+      return baseRate;
+    } else if (student.rateType === 'custom') {
+      return baseRate; // Fixed for custom
     }
-    return Math.round((baseRate * duration) / 90);
+    return baseRate;
   };
 
   // ─── CRUD: Teacher Info ─────────────────────────────────────────────────
@@ -201,81 +159,6 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // ─── CRUD: Schedules ───────────────────────────────────────────────────
-
-  const addSchedule = async (scheduleData) => {
-    // Client-side pre-check for immediate UX feedback
-    const conflict = checkScheduleConflict(scheduleData);
-    if (conflict.isConflict) {
-      showToast(`Peringatan: ${conflict.reason}`, 'error');
-      return false;
-    }
-
-    try {
-      const newSch = await api.createSchedule(scheduleData);
-      setSchedules((prev) => [newSch, ...prev]);
-      showToast('Jadwal les baru berhasil ditambahkan.');
-      return true;
-    } catch (err) {
-      showToast(`Gagal membuat jadwal: ${err.message}`, 'error');
-      return false;
-    }
-  };
-
-  const updateSchedule = async (id, scheduleData) => {
-    const conflict = checkScheduleConflict(scheduleData, id);
-    if (conflict.isConflict) {
-      showToast(`Peringatan: ${conflict.reason}`, 'error');
-      return false;
-    }
-
-    try {
-      const updated = await api.updateSchedule(id, scheduleData);
-      setSchedules((prev) => prev.map((sch) => (sch.id === id ? updated : sch)));
-      showToast('Jadwal les berhasil diperbarui.');
-      return true;
-    } catch (err) {
-      showToast(`Gagal memperbarui jadwal: ${err.message}`, 'error');
-      return false;
-    }
-  };
-
-  const deleteSchedule = async (id) => {
-    try {
-      await api.deleteSchedule(id);
-      setSchedules((prev) => prev.filter((sch) => sch.id !== id));
-      showToast('Jadwal les dihapus.', 'info');
-    } catch (err) {
-      showToast(`Gagal menghapus jadwal: ${err.message}`, 'error');
-    }
-  };
-
-  // ─── Schedule → Attendance Quick Conversion ─────────────────────────────
-
-  const openAttendanceForSchedule = (schedule) => {
-    let duration = 90;
-    if (schedule.startTime && schedule.endTime) {
-      duration = timeToMinutes(schedule.endTime) - timeToMinutes(schedule.startTime);
-      if (duration <= 0) duration = 90;
-    }
-
-    const calculatedFee = calculateFee(schedule.studentId, duration);
-
-    setPrefilledAttendanceData({
-      scheduleId: schedule.id,
-      studentId: schedule.studentId,
-      subjectId: schedule.subjectId,
-      date: schedule.date || new Date().toISOString().split('T')[0],
-      startTime: schedule.startTime || '15:00',
-      endTime: schedule.endTime || '16:30',
-      durationMinutes: duration,
-      calculatedFee: calculatedFee,
-      additionalFees: [],
-      materiNotes: schedule.notes || '',
-      progressNotes: '',
-    });
-    setIsAttendanceModalOpen(true);
-  };
 
   // ─── CRUD: Attendance ──────────────────────────────────────────────────
 
@@ -283,13 +166,6 @@ export const AppProvider = ({ children }) => {
     try {
       const newAtt = await api.createAttendance(attendanceData);
       setAttendance((prev) => [newAtt, ...prev]);
-
-      // Mark related schedule as completed in local state
-      if (attendanceData.scheduleId) {
-        setSchedules((prev) =>
-          prev.map((s) => (s.id === attendanceData.scheduleId ? { ...s, status: 'completed' } : s))
-        );
-      }
 
       showToast('Kehadiran les berhasil dicatat!');
       return true;
@@ -383,11 +259,6 @@ export const AppProvider = ({ children }) => {
         addSubject,
         updateSubject,
         deleteSubject,
-        schedules,
-        addSchedule,
-        updateSchedule,
-        deleteSchedule,
-        checkScheduleConflict,
         attendance,
         addAttendance,
         updateAttendance,
@@ -405,11 +276,6 @@ export const AppProvider = ({ children }) => {
         setIsAttendanceModalOpen,
         prefilledAttendanceData,
         setPrefilledAttendanceData,
-        openAttendanceForSchedule,
-        isScheduleModalOpen,
-        setIsScheduleModalOpen,
-        prefilledScheduleData,
-        setPrefilledScheduleData,
         invoicePreviewData,
         setInvoicePreviewData,
       }}

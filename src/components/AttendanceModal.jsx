@@ -16,7 +16,6 @@ export const AttendanceModal = () => {
   } = useApp();
 
   const [formData, setFormData] = useState({
-    scheduleId: null,
     studentId: '',
     subjectId: '',
     date: new Date().toISOString().split('T')[0],
@@ -24,26 +23,18 @@ export const AttendanceModal = () => {
     endTime: '17:00',
     durationMinutes: 90,
     calculatedFee: 0,
-    additionalFees: [],
-    materiNotes: '',
-    progressNotes: '',
   });
-
-  const [newAddFeeDesc, setNewAddFeeDesc] = useState('');
-  const [newAddFeeAmount, setNewAddFeeAmount] = useState('');
 
   useEffect(() => {
     if (prefilledAttendanceData) {
       setFormData({
         ...prefilledAttendanceData,
-        additionalFees: prefilledAttendanceData.additionalFees || [],
       });
     } else if (students.length > 0 && subjects.length > 0) {
       const firstStd = students[0];
       const initialDuration = 90;
       const initialFee = calculateFee(firstStd.id, initialDuration);
       setFormData({
-        scheduleId: null,
         studentId: firstStd.id,
         subjectId: firstStd.defaultSubjectId || subjects[0].id,
         date: new Date().toISOString().split('T')[0],
@@ -51,9 +42,6 @@ export const AttendanceModal = () => {
         endTime: '17:00',
         durationMinutes: initialDuration,
         calculatedFee: initialFee,
-        additionalFees: [],
-        materiNotes: '',
-        progressNotes: '',
       });
     }
   }, [prefilledAttendanceData, isAttendanceModalOpen, students, subjects]);
@@ -79,31 +67,7 @@ export const AttendanceModal = () => {
     }));
   };
 
-  const handleAddAdditionalFee = () => {
-    if (!newAddFeeDesc.trim() || !newAddFeeAmount) return;
-    const amount = Number(newAddFeeAmount) || 0;
-    const newItem = {
-      id: `add-${Date.now()}`,
-      description: newAddFeeDesc.trim(),
-      amount: amount,
-    };
-    setFormData((prev) => ({
-      ...prev,
-      additionalFees: [...prev.additionalFees, newItem],
-    }));
-    setNewAddFeeDesc('');
-    setNewAddFeeAmount('');
-  };
-
-  const handleRemoveAdditionalFee = (addId) => {
-    setFormData((prev) => ({
-      ...prev,
-      additionalFees: prev.additionalFees.filter((item) => item.id !== addId),
-    }));
-  };
-
-  const sumAdditionalFees = formData.additionalFees.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
-  const totalFee = (Number(formData.calculatedFee) || 0) + sumAdditionalFees;
+  const totalFee = Number(formData.calculatedFee) || 0;
 
   const selectedStudent = students.find((s) => s.id === formData.studentId);
 
@@ -248,68 +212,6 @@ export const AttendanceModal = () => {
               </span>
             </div>
 
-            {/* Additional Expenses Section */}
-            <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px dashed var(--border-color)' }}>
-              <label className="form-label" style={{ marginBottom: '6px' }}>
-                Biaya Tambahan (Opsional: Transport, Buku Modul, Fotokopi)
-              </label>
-
-              {formData.additionalFees.map((fee) => (
-                <div
-                  key={fee.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '6px 10px',
-                    borderRadius: 'var(--radius-sm)',
-                    background: 'var(--bg-primary)',
-                    marginBottom: '6px',
-                    fontSize: '0.85rem',
-                  }}
-                >
-                  <span>{fee.description}</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontWeight: '600' }}>+ Rp {Number(fee.amount).toLocaleString('id-ID')}</span>
-                    <button
-                      type="button"
-                      style={{ background: 'none', border: 'none', color: 'var(--accent-rose)', cursor: 'pointer' }}
-                      onClick={() => handleRemoveAdditionalFee(fee.id)}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-
-              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                <input
-                  type="text"
-                  className="form-input"
-                  style={{ fontSize: '0.8rem', height: '34px' }}
-                  placeholder="Keterangan (mis: Uang Transport)"
-                  value={newAddFeeDesc}
-                  onChange={(e) => setNewAddFeeDesc(e.target.value)}
-                />
-                <input
-                  type="number"
-                  className="form-input"
-                  style={{ fontSize: '0.8rem', height: '34px', width: '130px' }}
-                  placeholder="Biaya (Rp)"
-                  value={newAddFeeAmount}
-                  onChange={(e) => setNewAddFeeAmount(e.target.value)}
-                />
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  style={{ height: '34px', padding: '0 10px' }}
-                  onClick={handleAddAdditionalFee}
-                >
-                  <Plus size={16} />
-                </button>
-              </div>
-            </div>
-
             <div
               style={{
                 display: 'flex',
@@ -325,28 +227,6 @@ export const AttendanceModal = () => {
                 Rp {totalFee.toLocaleString('id-ID')}
               </span>
             </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Catatan Materi yang Diajarkan</label>
-            <input
-              type="text"
-              className="form-input"
-              placeholder="Misal: Pembahasan Soal Vektor & Matriks 3x3"
-              value={formData.materiNotes}
-              onChange={(e) => setFormData({ ...formData, materiNotes: e.target.value })}
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Catatan Perkembangan Siswa (Opsional)</label>
-            <textarea
-              className="form-textarea"
-              rows={2}
-              placeholder="Misal: Siswa sudah paham materi dasar, perlu penajaman di soal cerita."
-              value={formData.progressNotes}
-              onChange={(e) => setFormData({ ...formData, progressNotes: e.target.value })}
-            />
           </div>
 
           <div className="modal-footer">

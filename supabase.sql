@@ -43,21 +43,8 @@ CREATE TABLE students (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE schedules (
-  id TEXT PRIMARY KEY,
-  student_id TEXT REFERENCES students(id) ON DELETE CASCADE,
-  subject_id TEXT REFERENCES subjects(id) ON DELETE CASCADE,
-  date TEXT NOT NULL,
-  start_time TEXT NOT NULL,
-  end_time TEXT NOT NULL,
-  status TEXT DEFAULT 'scheduled',
-  notes TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
 CREATE TABLE attendance (
   id TEXT PRIMARY KEY,
-  schedule_id TEXT REFERENCES schedules(id) ON DELETE SET NULL,
   student_id TEXT REFERENCES students(id) ON DELETE CASCADE,
   subject_id TEXT REFERENCES subjects(id) ON DELETE CASCADE,
   date TEXT NOT NULL,
@@ -66,18 +53,9 @@ CREATE TABLE attendance (
   duration_minutes INTEGER,
   calculated_fee INTEGER DEFAULT 0,
   total_fee INTEGER DEFAULT 0,
-  materi_notes TEXT,
-  progress_notes TEXT,
   payment_status TEXT DEFAULT 'unpaid',
   payment_date TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE additional_fees (
-  id TEXT PRIMARY KEY,
-  attendance_id TEXT REFERENCES attendance(id) ON DELETE CASCADE,
-  description TEXT NOT NULL,
-  amount INTEGER NOT NULL DEFAULT 0
 );
 
 
@@ -122,13 +100,9 @@ ON CONFLICT (id) DO NOTHING;
 ALTER TABLE teacher_info ENABLE ROW LEVEL SECURITY;
 ALTER TABLE subjects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE students ENABLE ROW LEVEL SECURITY;
-ALTER TABLE schedules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE attendance ENABLE ROW LEVEL SECURITY;
-ALTER TABLE additional_fees ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow all operations for anon" ON teacher_info FOR ALL USING (true);
 CREATE POLICY "Allow all operations for anon" ON subjects FOR ALL USING (true);
 CREATE POLICY "Allow all operations for anon" ON students FOR ALL USING (true);
-CREATE POLICY "Allow all operations for anon" ON schedules FOR ALL USING (true);
 CREATE POLICY "Allow all operations for anon" ON attendance FOR ALL USING (true);
-CREATE POLICY "Allow all operations for anon" ON additional_fees FOR ALL USING (true);

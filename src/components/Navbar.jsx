@@ -22,8 +22,6 @@ export const Navbar = () => {
     setSearchTerm,
     setIsAttendanceModalOpen,
     setPrefilledAttendanceData,
-    setIsScheduleModalOpen,
-    setPrefilledScheduleData,
   } = useApp();
 
   const [theme, setTheme] = useState(
@@ -42,11 +40,6 @@ export const Navbar = () => {
   const handleOpenQuickAttendance = () => {
     setPrefilledAttendanceData(null);
     setIsAttendanceModalOpen(true);
-  };
-
-  const handleOpenQuickSchedule = () => {
-    setPrefilledScheduleData(null);
-    setIsScheduleModalOpen(true);
   };
 
   return (
@@ -90,14 +83,6 @@ export const Navbar = () => {
       </div>
 
       <div className="nav-actions">
-        <button
-          className="btn btn-secondary btn-sm"
-          onClick={handleOpenQuickSchedule}
-          title="Buat Jadwal Les Baru"
-        >
-          <Calendar size={16} />
-          <span className="hide-mobile">+ Jadwal</span>
-        </button>
 
         <button
           className="btn btn-primary btn-sm"

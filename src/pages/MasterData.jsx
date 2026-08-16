@@ -296,7 +296,7 @@ export const MasterData = () => {
                 <div>
                   <h4 style={{ fontWeight: '700', fontSize: '1rem' }}>{sub.name}</h4>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    Warna Kalender: {sub.color}
+                    Warna Label: {sub.color}
                   </span>
                 </div>
 
@@ -660,7 +660,7 @@ export const MasterData = () => {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Pilih Warna Kalender</label>
+                <label className="form-label">Pilih Warna Label</label>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                   <input
                     type="color"

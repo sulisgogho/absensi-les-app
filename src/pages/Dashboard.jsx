@@ -15,13 +15,10 @@ import {
 
 export const Dashboard = () => {
   const {
-    schedules,
     attendance,
     students,
     subjects,
     setActiveTab,
-    openAttendanceForSchedule,
-    setIsScheduleModalOpen,
     setIsAttendanceModalOpen,
   } = useApp();
 
@@ -42,9 +39,6 @@ export const Dashboard = () => {
 
   const activeStudentsCount = students.length;
 
-  // Schedules Today
-  const todayStr = new Date().toISOString().split('T')[0];
-  const todaySchedules = schedules.filter((s) => s.date === todayStr);
 
   // SVG Revenue Trend Chart Simulation (Last 6 Months)
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
@@ -86,15 +80,7 @@ export const Dashboard = () => {
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <button
-            className="btn btn-secondary"
-            onClick={() => {
-              setIsScheduleModalOpen(true);
-            }}
-          >
-            <Calendar size={18} />
-            <span>Buat Jadwal</span>
-          </button>
+
           <button
             className="btn btn-primary"
             onClick={() => {
@@ -317,90 +303,6 @@ export const Dashboard = () => {
           </div>
         </div>
 
-        {/* Today's Schedule Widget */}
-        <div className="card">
-          <div className="card-header">
-            <div>
-              <h3 className="card-title">
-                <Calendar size={18} color="var(--accent-sky)" /> Jadwal Hari Ini
-              </h3>
-              <p className="card-subtitle">
-                {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-              </p>
-            </div>
-            <button
-              className="btn btn-secondary btn-sm"
-              onClick={() => setActiveTab('calendar')}
-            >
-              Lihat Kalender
-            </button>
-          </div>
-
-          {todaySchedules.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--text-muted)' }}>
-              <Calendar size={36} style={{ marginBottom: '8px', opacity: 0.5 }} />
-              <p style={{ fontSize: '0.9rem' }}>Tidak ada jadwal mengajar hari ini.</p>
-              <button
-                className="btn btn-primary btn-sm"
-                style={{ marginTop: '12px' }}
-                onClick={() => setIsScheduleModalOpen(true)}
-              >
-                + Buat Jadwal Hari Ini
-              </button>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {todaySchedules.map((sch) => {
-                const std = students.find((s) => s.id === sch.studentId);
-                const sub = subjects.find((s) => s.id === sch.subjectId);
-                const isCompleted = sch.status === 'completed';
-
-                return (
-                  <div
-                    key={sch.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '0.85rem 1rem',
-                      borderRadius: 'var(--radius-md)',
-                      background: 'var(--bg-secondary)',
-                      borderLeft: `4px solid ${sub?.color || 'var(--primary)'}`,
-                    }}
-                  >
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontWeight: '700', fontSize: '0.95rem' }}>
-                          {std ? std.name : 'Siswa'}
-                        </span>
-                        <span className="badge badge-scheduled">
-                          <Clock size={12} /> {sch.startTime} - {sch.endTime}
-                        </span>
-                      </div>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                        {sub?.name || 'Mata Pelajaran'} • {sch.notes || 'Tidak ada catatan'}
-                      </p>
-                    </div>
-
-                    {isCompleted ? (
-                      <span className="badge badge-paid">
-                        <CheckCircle2 size={12} /> Selesai
-                      </span>
-                    ) : (
-                      <button
-                        className="btn btn-success btn-sm"
-                        onClick={() => openAttendanceForSchedule(sch)}
-                        title="Klik untuk langsung catat absensi"
-                      >
-                        <PlusCircle size={14} /> Catat Absensi
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Recent Attendance Log Activity */}
@@ -425,7 +327,6 @@ export const Dashboard = () => {
                 <th>Siswa</th>
                 <th>Mata Pelajaran</th>
                 <th>Durasi</th>
-                <th>Materi</th>
                 <th>Total Biaya</th>
                 <th>Status Pembayaran</th>
               </tr>
@@ -454,9 +355,6 @@ export const Dashboard = () => {
                       </span>
                     </td>
                     <td>{att.durationMinutes} menit</td>
-                    <td style={{ maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {att.materiNotes || '-'}
-                    </td>
                     <td style={{ fontWeight: '700' }}>
                       Rp {Number(att.totalFee || 0).toLocaleString('id-ID')}
                     </td>

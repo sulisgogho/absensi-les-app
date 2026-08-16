@@ -73,7 +73,6 @@ export const BillingInvoice = () => {
     targetItems.forEach((att, idx) => {
       const sub = subjects.find((s) => s.id === att.subjectId);
       msg += `${idx + 1}. ${att.date} (${att.durationMinutes}m) - ${sub?.name || 'Les'}\n`;
-      if (att.materiNotes) msg += `   • Materi: ${att.materiNotes}\n`;
       msg += `   • Biaya: Rp ${Number(att.totalFee).toLocaleString('id-ID')}\n`;
     });
 
@@ -108,12 +107,7 @@ export const BillingInvoice = () => {
     ? attendance.filter((a) => a.studentId === invoiceModalStudent.id)
     : [];
 
-  const invoiceSubtotal = invoiceStudentItems.reduce((acc, curr) => acc + (Number(curr.calculatedFee) || 0), 0);
-  const invoiceAddFees = invoiceStudentItems.reduce(
-    (acc, curr) => acc + (curr.additionalFees || []).reduce((a, c) => a + (Number(c.amount) || 0), 0),
-    0
-  );
-  const invoiceTotal = invoiceSubtotal + invoiceAddFees;
+  const invoiceTotal = invoiceStudentItems.reduce((acc, curr) => acc + (Number(curr.totalFee) || 0), 0);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -281,7 +275,6 @@ export const BillingInvoice = () => {
                         <th>Mata Pelajaran</th>
                         <th>Durasi</th>
                         <th>Rincian Biaya Sesi</th>
-                        <th>Materi & Catatan</th>
                         <th>Status Pembayaran</th>
                         <th style={{ textAlign: 'right' }}>Aksi</th>
                       </tr>
@@ -299,7 +292,6 @@ export const BillingInvoice = () => {
                                 Rp {Number(att.totalFee).toLocaleString('id-ID')}
                               </span>
                             </td>
-                            <td style={{ fontSize: '0.85rem' }}>{att.materiNotes || '-'}</td>
                             <td>
                               {att.paymentStatus === 'paid' ? (
                                 <span className="badge badge-paid">Lunas</span>
@@ -404,7 +396,7 @@ export const BillingInvoice = () => {
                   <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #cbd5e1' }}>
                     <th style={{ padding: '8px 10px', textAlign: 'left' }}>No</th>
                     <th style={{ padding: '8px 10px', textAlign: 'left' }}>Tanggal</th>
-                    <th style={{ padding: '8px 10px', textAlign: 'left' }}>Mata Pelajaran & Materi</th>
+                    <th style={{ padding: '8px 10px', textAlign: 'left' }}>Mata Pelajaran</th>
                     <th style={{ padding: '8px 10px', textAlign: 'center' }}>Durasi</th>
                     <th style={{ padding: '8px 10px', textAlign: 'right' }}>Biaya Sesi</th>
                   </tr>
@@ -418,7 +410,6 @@ export const BillingInvoice = () => {
                         <td style={{ padding: '8px 10px' }}>{item.date}</td>
                         <td style={{ padding: '8px 10px' }}>
                           <strong style={{ color: '#0f172a' }}>{sub?.name || 'Les'}</strong>
-                          {item.materiNotes && <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{item.materiNotes}</div>}
                         </td>
                         <td style={{ padding: '8px 10px', textAlign: 'center' }}>{item.durationMinutes}m</td>
                         <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: '700' }}>

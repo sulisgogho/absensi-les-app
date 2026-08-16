@@ -12,11 +12,9 @@ import {
 } from 'lucide-react';
 
 export const Sidebar = () => {
-  const { activeTab, setActiveTab, attendance, schedules, students } = useApp();
+  const { activeTab, setActiveTab, attendance, students } = useApp();
 
   const unpaidCount = attendance.filter((a) => a.paymentStatus === 'unpaid').length;
-  const todayStr = new Date().toISOString().split('T')[0];
-  const todayScheduleCount = schedules.filter((s) => s.date === todayStr && s.status !== 'cancelled').length;
 
   const navItems = [
     {
@@ -25,13 +23,7 @@ export const Sidebar = () => {
       icon: LayoutDashboard,
       badge: null,
     },
-    {
-      id: 'calendar',
-      label: 'Jadwal & Kalender',
-      icon: Calendar,
-      badge: todayScheduleCount > 0 ? `${todayScheduleCount} Hari Ini` : null,
-      badgeColor: 'var(--accent-sky)',
-    },
+
     {
       id: 'attendance',
       label: 'Pencatatan Absensi',
@@ -59,7 +51,7 @@ export const Sidebar = () => {
       {/* Desktop Sidebar */}
       <aside className="sidebar btn-no-print">
         <div className="nav-group">
-          <p
+          <p className="sidebar-title"
             style={{
               fontSize: '0.72rem',
               fontWeight: '700',
@@ -79,21 +71,23 @@ export const Sidebar = () => {
             return (
               <button
                 key={item.id}
+                title={item.label}
                 className={`nav-item ${isActive ? 'active' : ''}`}
                 onClick={() => setActiveTab(item.id)}
               >
-                <Icon size={18} />
-                <span style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>
+                <Icon size={18} className="nav-icon" />
+                <span className="nav-label" style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>
 
                 {item.badge && (
                   <span
+                    className="nav-badge"
                     style={{
                       fontSize: '0.68rem',
                       fontWeight: '700',
                       padding: '2px 7px',
                       borderRadius: 'var(--radius-full)',
-                      background: isActive ? 'rgba(255,255,255,0.2)' : item.badgeColor || 'var(--primary-light)',
-                      color: isActive ? '#fff' : item.badgeColor ? '#fff' : 'var(--primary)',
+                      background: item.badgeColor || 'var(--primary)',
+                      color: '#fff',
                     }}
                   >
                     {item.badge}
@@ -104,22 +98,6 @@ export const Sidebar = () => {
           })}
         </div>
 
-        <div
-          className="card"
-          style={{
-            padding: '1rem',
-            background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(16,185,129,0.05))',
-            borderColor: 'var(--border-highlight)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-            <ShieldCheck size={18} color="var(--secondary)" />
-            <span style={{ fontSize: '0.85rem', fontWeight: '700' }}>Penyimpanan Lokal</span>
-          </div>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Data tersimpan aman di browser Anda. Tidak ada risiko kebocoran data.
-          </p>
-        </div>
       </aside>
 
       {/* Mobile Bottom Navigation */}

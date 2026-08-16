@@ -44,7 +44,7 @@ export const AttendanceLog = () => {
           <div>
             <h2 style={{ fontSize: '1.3rem', fontWeight: '800' }}>Pencatatan Kehadiran (Absensi Harian)</h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Riwayat pelaksanaan les, durasi aktual, kalkulasi biaya otomatis, & rincian biaya tambahan.
+              Riwayat pelaksanaan les, durasi aktual, & kalkulasi biaya otomatis.
             </p>
           </div>
 
@@ -112,8 +112,7 @@ export const AttendanceLog = () => {
                 <th>Siswa & Grade</th>
                 <th>Mata Pelajaran</th>
                 <th>Durasi Aktual</th>
-                <th>Biaya Sesi & Tambahan</th>
-                <th>Catatan Materi & Progress</th>
+                <th>Total Biaya</th>
                 <th>Status Pembayaran</th>
                 <th style={{ textAlign: 'right' }}>Aksi</th>
               </tr>
@@ -121,7 +120,7 @@ export const AttendanceLog = () => {
             <tbody>
               {filteredAttendance.length === 0 ? (
                 <tr>
-                  <td colSpan="8" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
                     Belum ada data absensi yang sesuai filter.
                   </td>
                 </tr>
@@ -129,7 +128,6 @@ export const AttendanceLog = () => {
                 filteredAttendance.map((att) => {
                   const std = students.find((s) => s.id === att.studentId);
                   const sub = subjects.find((s) => s.id === att.subjectId);
-                  const addFeesSum = (att.additionalFees || []).reduce((a, c) => a + (Number(c.amount) || 0), 0);
 
                   return (
                     <tr key={att.id}>
@@ -161,19 +159,6 @@ export const AttendanceLog = () => {
                         <div style={{ fontWeight: '800', color: 'var(--secondary)' }}>
                           Rp {Number(att.totalFee || 0).toLocaleString('id-ID')}
                         </div>
-                        {addFeesSum > 0 && (
-                          <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)' }}>
-                            (Dasar: Rp {Number(att.calculatedFee).toLocaleString('id-ID')} + Extra: Rp {addFeesSum.toLocaleString('id-ID')})
-                          </div>
-                        )}
-                      </td>
-                      <td style={{ maxWidth: '240px' }}>
-                        <div style={{ fontWeight: '600', fontSize: '0.85rem' }}>{att.materiNotes || '-'}</div>
-                        {att.progressNotes && (
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic', marginTop: '2px' }}>
-                            "{att.progressNotes}"
-                          </div>
-                        )}
                       </td>
                       <td>
                         <button

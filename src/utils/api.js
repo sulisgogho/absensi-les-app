@@ -85,97 +85,36 @@ export const api = {
     return true;
   },
 
-  // Schedules
-  getSchedules: async () => {
-    const res = await supabase.from('schedules').select('*').order('date', { ascending: false }).order('start_time', { ascending: true });
-    return handleResponse(res);
-  },
-  createSchedule: async (data) => {
-    const id = `sch-${nanoid(6)}`;
-    const res = await supabase.from('schedules').insert({ id, ...keysToSnake(data) }).select().single();
-    return handleResponse(res);
-  },
-  updateSchedule: async (id, data) => {
-    const res = await supabase.from('schedules').update(keysToSnake(data)).eq('id', id).select().single();
-    return handleResponse(res);
-  },
-  deleteSchedule: async (id) => {
-    const res = await supabase.from('schedules').delete().eq('id', id);
-    if (res.error) throw new Error(res.error.message);
-    return true;
-  },
-
   // Attendance
   getAttendance: async () => {
-    const res = await supabase.from('attendance').select('*, additional_fees(*)').order('date', { ascending: false }).order('start_time', { ascending: false });
+    const res = await supabase.from('attendance').select('*').order('date', { ascending: false }).order('start_time', { ascending: false });
     if (res.error) throw new Error(res.error.message);
     
-    // Map the result to match the camelCase structure
-    const camelData = keysToCamel(res.data);
-    return camelData.map(item => ({
-      ...item,
-      additionalFees: item.additionalFees || [] 
-    }));
+    return keysToCamel(res.data);
   },
   createAttendance: async (data) => {
-    const { additionalFees, ...attendanceData } = data;
     const attId = `att-${nanoid(6)}`;
-    
-    const totalAddFees = (additionalFees || []).reduce((sum, f) => sum + Number(f.amount || 0), 0);
-    const total_fee = Number(attendanceData.calculatedFee || 0) + totalAddFees;
     
     const insertData = keysToSnake({
       id: attId,
-      ...attendanceData,
-      totalFee: total_fee,
-      paymentStatus: attendanceData.paymentStatus || 'unpaid',
+      ...data,
+      totalFee: data.calculatedFee || 0,
+      paymentStatus: data.paymentStatus || 'unpaid',
     });
 
     const res = await supabase.from('attendance').insert(insertData).select().single();
     if (res.error) throw new Error(res.error.message);
 
-    if (additionalFees && additionalFees.length > 0) {
-      const feesToInsert = additionalFees.map(f => ({
-        id: `fee-${nanoid(6)}`,
-        attendance_id: attId,
-        description: f.description,
-        amount: f.amount
-      }));
-      const { error: feeError } = await supabase.from('additional_fees').insert(feesToInsert);
-      if (feeError) console.error("Error inserting fees:", feeError);
-    }
-    
-    if (attendanceData.scheduleId) {
-       await supabase.from('schedules').update({ status: 'completed' }).eq('id', attendanceData.scheduleId);
-    }
-
-    const camelRes = keysToCamel(res.data);
-    return { ...camelRes, additionalFees: additionalFees || [] };
+    return keysToCamel(res.data);
   },
   updateAttendance: async (id, data) => {
-    const { additionalFees, ...attendanceData } = data;
-    const updateData = keysToSnake(attendanceData);
-    
-    if (additionalFees !== undefined) {
-      await supabase.from('additional_fees').delete().eq('attendance_id', id);
-      if (additionalFees.length > 0) {
-        const feesToInsert = additionalFees.map(f => ({
-          id: `fee-${nanoid(6)}`,
-          attendance_id: id,
-          description: f.description,
-          amount: f.amount
-        }));
-        await supabase.from('additional_fees').insert(feesToInsert);
-      }
-      const totalAddFees = (additionalFees || []).reduce((sum, f) => sum + Number(f.amount || 0), 0);
-      updateData.total_fee = Number(attendanceData.calculatedFee || 0) + totalAddFees;
-    }
+    const updateData = keysToSnake(data);
+    updateData.total_fee = data.calculatedFee || 0;
 
     const res = await supabase.from('attendance').update(updateData).eq('id', id).select().single();
     if (res.error) throw new Error(res.error.message);
     
-    const camelRes = keysToCamel(res.data);
-    return { ...camelRes, additionalFees: additionalFees || [] };
+    return keysToCamel(res.data);
   },
   deleteAttendance: async (id) => {
     const res = await supabase.from('attendance').delete().eq('id', id);
