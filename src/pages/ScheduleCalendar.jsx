@@ -165,136 +165,138 @@ export const ScheduleCalendar = () => {
 
       {/* MONTHLY CALENDAR VIEW */}
       {viewMode === 'month' && (
-        <div className="card" style={{ padding: '1rem' }}>
-          {/* Day Names Header */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(7, 1fr)',
-              gap: '4px',
-              textAlign: 'center',
-              fontWeight: '700',
-              fontSize: '0.8rem',
-              color: 'var(--text-muted)',
-              marginBottom: '8px',
-              paddingBottom: '8px',
-              borderBottom: '1px solid var(--border-color)',
-            }}
-          >
-            <div>Minggu</div>
-            <div>Senin</div>
-            <div>Selasa</div>
-            <div>Rabu</div>
-            <div>Kamis</div>
-            <div>Jumat</div>
-            <div>Sabtu</div>
-          </div>
+        <div className="card" style={{ padding: '1rem', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <div style={{ minWidth: '700px' }}>
+            {/* Day Names Header */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(7, 1fr)',
+                gap: '4px',
+                textAlign: 'center',
+                fontWeight: '700',
+                fontSize: '0.8rem',
+                color: 'var(--text-muted)',
+                marginBottom: '8px',
+                paddingBottom: '8px',
+                borderBottom: '1px solid var(--border-color)',
+              }}
+            >
+              <div>Minggu</div>
+              <div>Senin</div>
+              <div>Selasa</div>
+              <div>Rabu</div>
+              <div>Kamis</div>
+              <div>Jumat</div>
+              <div>Sabtu</div>
+            </div>
 
-          {/* Calendar Grid Cells */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px' }}>
-            {calendarDays.map((cell, idx) => {
-              if (cell.type === 'empty') {
+            {/* Calendar Grid Cells */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px' }}>
+              {calendarDays.map((cell, idx) => {
+                if (cell.type === 'empty') {
+                  return (
+                    <div
+                      key={cell.id}
+                      style={{
+                        minHeight: '110px',
+                        background: 'rgba(0,0,0,0.05)',
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px dashed rgba(255,255,255,0.03)',
+                      }}
+                    />
+                  );
+                }
+
                 return (
                   <div
-                    key={cell.id}
+                    key={cell.dateStr}
                     style={{
-                      minHeight: '110px',
-                      background: 'rgba(0,0,0,0.05)',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '1px dashed rgba(255,255,255,0.03)',
+                      minHeight: '120px',
+                      padding: '8px',
+                      borderRadius: 'var(--radius-md)',
+                      background: cell.isToday ? 'var(--primary-light)' : 'var(--bg-secondary)',
+                      border: cell.isToday ? '2px solid var(--primary)' : '1px solid var(--border-color)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
                     }}
-                  />
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <span
+                        style={{
+                          fontWeight: cell.isToday ? '800' : '600',
+                          fontSize: '0.85rem',
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: cell.isToday ? 'var(--primary)' : 'transparent',
+                          color: cell.isToday ? '#fff' : 'var(--text-main)',
+                        }}
+                      >
+                        {cell.dayNumber}
+                      </span>
+
+                      <button
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--text-dim)',
+                          cursor: 'pointer',
+                          padding: 0,
+                        }}
+                        title="Buat Jadwal Tanggal Ini"
+                        onClick={() => {
+                          setPrefilledScheduleData({ date: cell.dateStr });
+                          setIsScheduleModalOpen(true);
+                        }}
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
+
+                    {/* Daily Schedule Items */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, overflowY: 'auto' }}>
+                      {cell.schedules.map((sch) => {
+                        const std = students.find((s) => s.id === sch.studentId);
+                        const sub = subjects.find((s) => s.id === sch.subjectId);
+                        const isCompleted = sch.status === 'completed';
+
+                        return (
+                          <div
+                            key={sch.id}
+                            style={{
+                              padding: '4px 6px',
+                              borderRadius: 'var(--radius-sm)',
+                              background: sub ? `${sub.color}25` : 'var(--primary-light)',
+                              borderLeft: `3px solid ${sub?.color || 'var(--primary)'}`,
+                              fontSize: '0.73rem',
+                              cursor: 'pointer',
+                            }}
+                            onClick={() => {
+                              if (!isCompleted) {
+                                openAttendanceForSchedule(sch);
+                              }
+                            }}
+                            title={`Klik untuk konversi ke absensi: ${std?.name} (${sch.startTime}-${sch.endTime})`}
+                          >
+                            <div style={{ fontWeight: '700', color: sub?.color || 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {std ? std.name.split(' ')[0] : 'Siswa'}
+                            </div>
+                            <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                              {sch.startTime} • {isCompleted ? '✓ Absen' : 'Jadwal'}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 );
-              }
-
-              return (
-                <div
-                  key={cell.dateStr}
-                  style={{
-                    minHeight: '120px',
-                    padding: '8px',
-                    borderRadius: 'var(--radius-md)',
-                    background: cell.isToday ? 'var(--primary-light)' : 'var(--bg-secondary)',
-                    border: cell.isToday ? '2px solid var(--primary)' : '1px solid var(--border-color)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <span
-                      style={{
-                        fontWeight: cell.isToday ? '800' : '600',
-                        fontSize: '0.85rem',
-                        width: '24px',
-                        height: '24px',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        background: cell.isToday ? 'var(--primary)' : 'transparent',
-                        color: cell.isToday ? '#fff' : 'var(--text-main)',
-                      }}
-                    >
-                      {cell.dayNumber}
-                    </span>
-
-                    <button
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--text-dim)',
-                        cursor: 'pointer',
-                        padding: 0,
-                      }}
-                      title="Buat Jadwal Tanggal Ini"
-                      onClick={() => {
-                        setPrefilledScheduleData({ date: cell.dateStr });
-                        setIsScheduleModalOpen(true);
-                      }}
-                    >
-                      <Plus size={14} />
-                    </button>
-                  </div>
-
-                  {/* Daily Schedule Items */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, overflowY: 'auto' }}>
-                    {cell.schedules.map((sch) => {
-                      const std = students.find((s) => s.id === sch.studentId);
-                      const sub = subjects.find((s) => s.id === sch.subjectId);
-                      const isCompleted = sch.status === 'completed';
-
-                      return (
-                        <div
-                          key={sch.id}
-                          style={{
-                            padding: '4px 6px',
-                            borderRadius: 'var(--radius-sm)',
-                            background: sub ? `${sub.color}25` : 'var(--primary-light)',
-                            borderLeft: `3px solid ${sub?.color || 'var(--primary)'}`,
-                            fontSize: '0.73rem',
-                            cursor: 'pointer',
-                          }}
-                          onClick={() => {
-                            if (!isCompleted) {
-                              openAttendanceForSchedule(sch);
-                            }
-                          }}
-                          title={`Klik untuk konversi ke absensi: ${std?.name} (${sch.startTime}-${sch.endTime})`}
-                        >
-                          <div style={{ fontWeight: '700', color: sub?.color || 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {std ? std.name.split(' ')[0] : 'Siswa'}
-                          </div>
-                          <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                            {sch.startTime} • {isCompleted ? '✓ Absen' : 'Jadwal'}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
             })}
+            </div>
           </div>
         </div>
       )}

@@ -66,7 +66,7 @@ export const Navbar = () => {
         </div>
       </div>
 
-      <div style={{ flex: 1, maxWidth: '400px', margin: '0 1.5rem' }}>
+      <div className="search-container" style={{ flex: 1, maxWidth: '400px', margin: '0 1.5rem' }}>
         <div style={{ position: 'relative' }}>
           <Search
             size={18}
@@ -82,7 +82,7 @@ export const Navbar = () => {
             type="text"
             className="form-input"
             style={{ paddingLeft: '38px', height: '38px', fontSize: '0.85rem' }}
-            placeholder="Cari siswa, materi, atau catatan..."
+            placeholder="Cari siswa, materi..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -96,7 +96,7 @@ export const Navbar = () => {
           title="Buat Jadwal Les Baru"
         >
           <Calendar size={16} />
-          <span>+ Jadwal</span>
+          <span className="hide-mobile">+ Jadwal</span>
         </button>
 
         <button
@@ -105,7 +105,7 @@ export const Navbar = () => {
           title="Catat Kehadiran Sesi Les"
         >
           <PlusCircle size={16} />
-          <span>+ Catat Absensi</span>
+          <span className="hide-mobile">+ Absensi</span>
         </button>
 
         <button
@@ -117,7 +117,7 @@ export const Navbar = () => {
         </button>
 
         <button
-          className="btn btn-secondary btn-icon"
+          className="btn btn-secondary btn-icon hide-mobile"
           onClick={() => {
             if (window.confirm('Reset data contoh ke default? Data yang Anda buat akan diperbarui ke sampel awal.')) {
               resetToDefaults();
@@ -129,6 +129,7 @@ export const Navbar = () => {
         </button>
 
         <div
+          className="user-profile-nav"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -153,7 +154,7 @@ export const Navbar = () => {
           >
             {teacherInfo.name ? teacherInfo.name.charAt(0) : 'G'}
           </div>
-          <div style={{ display: 'none', mdDisplay: 'block' }}>
+          <div className="hide-mobile">
             <p style={{ fontSize: '0.85rem', fontWeight: '700', lineHeight: 1.2 }}>
               {teacherInfo.name}
             </p>
