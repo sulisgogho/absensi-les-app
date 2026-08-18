@@ -715,6 +715,21 @@ body {
     padding: 0 !important;
     max-width: 100% !important;
   }
+  .modal-overlay {
+    position: absolute !important;
+    align-items: flex-start !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+  .modal-content {
+    max-height: none !important;
+    overflow: visible !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
   .invoice-printable {
     box-shadow: none !important;
     border: none !important;
