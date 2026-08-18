@@ -367,8 +367,6 @@ export const BillingInvoice = () => {
                   <p style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: '#64748b' }}>Tagihan Kepada:</p>
                   <p style={{ fontSize: '1.05rem', fontWeight: '800', color: '#0f172a' }}>{invoiceModalStudent.name}</p>
                   <p style={{ fontSize: '0.85rem', color: '#334155' }}>Kelas: {invoiceModalStudent.grade}</p>
-                  <p style={{ fontSize: '0.85rem', color: '#334155' }}>Orang Tua: {invoiceModalStudent.parentName || '-'}</p>
-                  <p style={{ fontSize: '0.85rem', color: '#334155' }}>Alamat: {invoiceModalStudent.address || '-'}</p>
                 </div>
 
                 <div style={{ textAlign: 'right' }}>
