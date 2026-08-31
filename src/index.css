@@ -704,9 +704,13 @@ body {
 
 /* Printable PDF Invoice CSS */
 @media print {
+  @page {
+    margin: 0; /* Menghilangkan header dan footer bawaan browser (termasuk URL) */
+  }
   body {
     background: #ffffff !important;
     color: #000000 !important;
+    padding: 1.5cm !important;
   }
   .navbar, .sidebar, .mobile-bottom-nav, .btn-no-print, .toast-container {
     display: none !important;
