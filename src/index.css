@@ -710,7 +710,6 @@ body {
   body {
     background: #ffffff !important;
     color: #000000 !important;
-    padding: 1.5cm !important;
   }
   .navbar, .sidebar, .mobile-bottom-nav, .btn-no-print, .toast-container {
     display: none !important;
@@ -737,8 +736,10 @@ body {
   .invoice-printable {
     box-shadow: none !important;
     border: none !important;
-    padding: 0 !important;
+    padding: 1.5cm 1cm !important; /* Memberikan margin/padding ke isi cetakan */
     background: #ffffff !important;
     color: #000000 !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
 }
