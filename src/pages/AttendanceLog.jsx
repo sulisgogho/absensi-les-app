@@ -12,6 +12,7 @@ import {
   DollarSign,
   FileText,
 } from 'lucide-react';
+import { MultiSelect } from '../components/MultiSelect';
 
 export const AttendanceLog = () => {
   const {
@@ -24,11 +25,11 @@ export const AttendanceLog = () => {
     togglePaymentStatus,
   } = useApp();
 
-  const [studentFilter, setStudentFilter] = useState('all');
+  const [studentFilter, setStudentFilter] = useState([]);
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'paid' | 'unpaid'
 
   const filteredAttendance = attendance.filter((att) => {
-    if (studentFilter !== 'all' && att.studentId !== studentFilter) return false;
+    if (studentFilter.length > 0 && !studentFilter.includes(att.studentId)) return false;
     if (statusFilter !== 'all' && att.paymentStatus !== statusFilter) return false;
     return true;
   });
@@ -39,7 +40,7 @@ export const AttendanceLog = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* Top Header Card */}
-      <div className="card" style={{ padding: '1.25rem 1.5rem' }}>
+      <div className="card" style={{ padding: '1.25rem 1.5rem', position: 'relative', zIndex: 50 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h2 style={{ fontSize: '1.3rem', fontWeight: '800' }}>Pencatatan Kehadiran (Absensi Harian)</h2>
@@ -61,21 +62,14 @@ export const AttendanceLog = () => {
 
         {/* Filter Controls */}
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', zIndex: 10 }}>
             <Filter size={16} color="var(--text-muted)" />
-            <select
-              className="form-select"
-              style={{ width: '180px', height: '36px', fontSize: '0.85rem', padding: '0 8px' }}
-              value={studentFilter}
-              onChange={(e) => setStudentFilter(e.target.value)}
-            >
-              <option value="all">Semua Siswa</option>
-              {students.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
+            <MultiSelect
+              options={students.map(s => ({ value: s.id, label: s.name }))}
+              selectedValues={studentFilter}
+              onChange={setStudentFilter}
+              placeholder="Semua Siswa"
+            />
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

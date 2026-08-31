@@ -16,6 +16,7 @@ import {
   X,
   CreditCard,
 } from 'lucide-react';
+import { MultiSelect } from '../components/MultiSelect';
 
 export const BillingInvoice = () => {
   const {
@@ -27,7 +28,7 @@ export const BillingInvoice = () => {
     markMultipleAsPaid,
   } = useApp();
 
-  const [selectedStudentId, setSelectedStudentId] = useState('all');
+  const [selectedStudentIds, setSelectedStudentIds] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState('all'); // 'all' | 'paid' | 'unpaid'
   const [dateStart, setDateStart] = useState('');
   const [dateEnd, setDateEnd] = useState('');
@@ -37,7 +38,7 @@ export const BillingInvoice = () => {
 
   // Filter attendance items
   const filteredItems = attendance.filter((att) => {
-    if (selectedStudentId !== 'all' && att.studentId !== selectedStudentId) return false;
+    if (selectedStudentIds.length > 0 && !selectedStudentIds.includes(att.studentId)) return false;
     if (selectedStatus !== 'all' && att.paymentStatus !== selectedStatus) return false;
     if (dateStart && att.date < dateStart) return false;
     if (dateEnd && att.date > dateEnd) return false;
@@ -58,10 +59,11 @@ export const BillingInvoice = () => {
   const handleShareWhatsApp = (student, items) => {
     if (!student || items.length === 0) return;
 
-    const studentUnpaidItems = items.filter((i) => i.paymentStatus === 'unpaid');
-    const targetItems = studentUnpaidItems.length > 0 ? studentUnpaidItems : items;
+    const targetItems = items;
 
-    const studentTotal = targetItems.reduce((acc, curr) => acc + (Number(curr.totalFee) || 0), 0);
+    const totalSemua = targetItems.reduce((acc, curr) => acc + (Number(curr.totalFee) || 0), 0);
+    const totalLunas = targetItems.filter(i => i.paymentStatus === 'paid').reduce((acc, curr) => acc + (Number(curr.totalFee) || 0), 0);
+    const totalSisa = totalSemua - totalLunas;
 
     let msg = `*TAGIHAN LES PRIVAT - ${teacherInfo.name.toUpperCase()}*\n`;
     msg += `----------------------------------------\n`;
@@ -72,11 +74,18 @@ export const BillingInvoice = () => {
 
     targetItems.forEach((att, idx) => {
       const sub = subjects.find((s) => s.id === att.subjectId);
-      msg += `${idx + 1}. ${att.date} (${att.durationMinutes}m) - ${sub?.name || 'Les'}\n`;
+      const statusText = att.paymentStatus === 'paid' ? ' *(LUNAS)*' : '';
+      msg += `${idx + 1}. ${att.date} (${att.durationMinutes}m) - ${sub?.name || 'Les'}${statusText}\n`;
       msg += `   • Biaya: Rp ${Number(att.totalFee).toLocaleString('id-ID')}\n`;
     });
 
-    msg += `\n*TOTAL TAGIHAN: Rp ${studentTotal.toLocaleString('id-ID')}*\n`;
+    msg += `\n*TOTAL BIAYA KESELURUHAN: Rp ${totalSemua.toLocaleString('id-ID')}*\n`;
+    if (totalLunas > 0) {
+      msg += `*SUDAH DIBAYAR (DEPOSIT): Rp ${totalLunas.toLocaleString('id-ID')}*\n`;
+      msg += `*SISA TAGIHAN: Rp ${totalSisa.toLocaleString('id-ID')}*\n`;
+    } else {
+      msg += `*TOTAL TAGIHAN: Rp ${totalSisa.toLocaleString('id-ID')}*\n`;
+    }
     msg += `----------------------------------------\n`;
     msg += `*Informasi Pembayaran / Transfer:*\n`;
     if (teacherInfo.bankName && teacherInfo.bankAccount) {
@@ -104,15 +113,17 @@ export const BillingInvoice = () => {
   };
 
   const invoiceStudentItems = invoiceModalStudent
-    ? attendance.filter((a) => a.studentId === invoiceModalStudent.id)
+    ? filteredItems.filter((a) => a.studentId === invoiceModalStudent.id)
     : [];
 
   const invoiceTotal = invoiceStudentItems.reduce((acc, curr) => acc + (Number(curr.totalFee) || 0), 0);
+  const invoicePaid = invoiceStudentItems.filter((a) => a.paymentStatus === 'paid').reduce((acc, curr) => acc + (Number(curr.totalFee) || 0), 0);
+  const invoiceUnpaid = invoiceTotal - invoicePaid;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* Header Bar */}
-      <div className="card btn-no-print" style={{ padding: '1.25rem 1.5rem' }}>
+      <div className="card btn-no-print" style={{ padding: '1.25rem 1.5rem', position: 'relative', zIndex: 50 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h2 style={{ fontSize: '1.3rem', fontWeight: '800' }}>Laporan Tagihan & Invoicing</h2>
@@ -124,21 +135,14 @@ export const BillingInvoice = () => {
 
         {/* Filters */}
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', zIndex: 10 }}>
             <Filter size={16} color="var(--text-muted)" />
-            <select
-              className="form-select"
-              style={{ width: '180px', height: '36px', fontSize: '0.85rem', padding: '0 8px' }}
-              value={selectedStudentId}
-              onChange={(e) => setSelectedStudentId(e.target.value)}
-            >
-              <option value="all">Semua Siswa</option>
-              {students.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
+            <MultiSelect
+              options={students.map(s => ({ value: s.id, label: s.name }))}
+              selectedValues={selectedStudentIds}
+              onChange={setSelectedStudentIds}
+              placeholder="Semua Siswa"
+            />
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -202,7 +206,7 @@ export const BillingInvoice = () => {
       {/* Student Billing Cards & Invoice Action Bar */}
       <div className="btn-no-print" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         {students
-          .filter((s) => selectedStudentId === 'all' || s.id === selectedStudentId)
+          .filter((s) => selectedStudentIds.length === 0 || selectedStudentIds.includes(s.id))
           .map((std) => {
             const stdItems = filteredItems.filter((item) => item.studentId === std.id);
             if (stdItems.length === 0) return null;
@@ -378,12 +382,12 @@ export const BillingInvoice = () => {
                       borderRadius: '12px',
                       fontWeight: '800',
                       fontSize: '0.85rem',
-                      background: invoiceStudentItems.some((i) => i.paymentStatus === 'unpaid') ? '#fef3c7' : '#d1fae5',
-                      color: invoiceStudentItems.some((i) => i.paymentStatus === 'unpaid') ? '#d97706' : '#059669',
+                      background: invoiceUnpaid === 0 ? '#d1fae5' : invoicePaid > 0 ? '#e0e7ff' : '#fef3c7',
+                      color: invoiceUnpaid === 0 ? '#059669' : invoicePaid > 0 ? '#4f46e5' : '#d97706',
                       marginTop: '4px',
                     }}
                   >
-                    {invoiceStudentItems.some((i) => i.paymentStatus === 'unpaid') ? 'BELUM LUNAS' : 'LUNAS'}
+                    {invoiceUnpaid === 0 ? 'LUNAS' : invoicePaid > 0 ? 'SEBAGIAN LUNAS' : 'BELUM LUNAS'}
                   </span>
                 </div>
               </div>
@@ -396,6 +400,7 @@ export const BillingInvoice = () => {
                     <th style={{ padding: '8px 10px', textAlign: 'left' }}>Tanggal</th>
                     <th style={{ padding: '8px 10px', textAlign: 'left' }}>Mata Pelajaran</th>
                     <th style={{ padding: '8px 10px', textAlign: 'center' }}>Durasi</th>
+                    <th style={{ padding: '8px 10px', textAlign: 'center' }}>Status</th>
                     <th style={{ padding: '8px 10px', textAlign: 'right' }}>Biaya Sesi</th>
                   </tr>
                 </thead>
@@ -410,6 +415,9 @@ export const BillingInvoice = () => {
                           <strong style={{ color: '#0f172a' }}>{sub?.name || 'Les'}</strong>
                         </td>
                         <td style={{ padding: '8px 10px', textAlign: 'center' }}>{item.durationMinutes}m</td>
+                        <td style={{ padding: '8px 10px', textAlign: 'center', fontWeight: '600', color: item.paymentStatus === 'paid' ? '#10b981' : '#f59e0b' }}>
+                          {item.paymentStatus === 'paid' ? 'Lunas' : 'Belum'}
+                        </td>
                         <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: '700' }}>
                           Rp {Number(item.totalFee).toLocaleString('id-ID')}
                         </td>
@@ -435,8 +443,10 @@ export const BillingInvoice = () => {
 
                 <div style={{ textAlign: 'right' }}>
                   <p style={{ fontSize: '0.9rem', color: '#475569' }}>Total Sesi Les: {invoiceStudentItems.length} Pertemuan</p>
-                  <h3 style={{ fontSize: '1.4rem', fontWeight: '800', color: '#4f46e5', marginTop: '6px' }}>
-                    TOTAL: Rp {invoiceTotal.toLocaleString('id-ID')}
+                  <p style={{ fontSize: '0.95rem', color: '#0f172a', marginTop: '6px' }}>Total Biaya: Rp {invoiceTotal.toLocaleString('id-ID')}</p>
+                  {invoicePaid > 0 && <p style={{ fontSize: '0.95rem', color: '#059669' }}>Sudah Dibayar: Rp {invoicePaid.toLocaleString('id-ID')}</p>}
+                  <h3 style={{ fontSize: '1.4rem', fontWeight: '800', color: '#4f46e5', marginTop: '6px', borderTop: '2px solid #e2e8f0', paddingTop: '6px' }}>
+                    SISA TAGIHAN: Rp {invoiceUnpaid.toLocaleString('id-ID')}
                   </h3>
                 </div>
               </div>
